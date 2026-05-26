@@ -177,7 +177,8 @@
     flex-shrink:0;min-width:48px;height:44px;padding:0 12px;border-radius:10px;
     background:var(--panel-2);border:1px solid var(--line);
     display:flex;align-items:center;gap:6px;text-decoration:none;color:var(--txt);
-    transition:.2s;cursor:pointer;-webkit-tap-highlight-color:rgba(255,45,77,.3);
+    transition:.2s;cursor:pointer;-webkit-tap-highlight-color:rgba(255,122,156,.3);
+    font:inherit;
   }
   .ex-vid:hover,.ex-vid:active{background:var(--accent);border-color:var(--accent)}
   .ex-vid svg{width:16px;height:16px;pointer-events:none}
@@ -1106,7 +1107,7 @@ function exCard(di,idx,e,isCore){
   const on=state[di][idx];
   const lk=logKey(di,e.n);
   const log=logs[lk]||{w:'',r:'',last:''};
-  const vid=`<a class="ex-vid" href="https://www.youtube.com/results?search_query=${encodeURIComponent(e.q)}" target="_blank" rel="noopener" title="Watch demo on YouTube">${PLAY}<span class="vlbl">Video</span></a>`;
+  const vid=`<button class="ex-vid" onclick="openYT('${encodeURIComponent(e.q)}')" title="Watch demo on YouTube">${PLAY}<span class="vlbl">Video</span></button>`;
   const lastTxt=log.last?`<span class="log-last">Last: ${log.last}</span>`:'';
   // auto-fill inputs with last session's numbers (so you just nudge up)
   const wVal = (log.w!=='' && log.w!=null) ? log.w : (log.lw!=null?log.lw:'');
@@ -1172,6 +1173,29 @@ function updateProgress(){
 
 function render(){ buildNav(); buildPanels(); updateProgress(); }
 
+window.openYT=function(q){
+  // Open the YouTube app; only fall back to web if the app never opened.
+  var appURL='youtube://results?search_query='+q;
+  var webURL='https://www.youtube.com/results?search_query='+q;
+  var opened=false;
+  // If the app launches, the page becomes hidden — cancel the fallback.
+  function onHide(){ if(document.hidden){ opened=true; cleanup(); } }
+  function cleanup(){
+    document.removeEventListener('visibilitychange',onHide);
+    window.removeEventListener('pagehide',onHide);
+    window.removeEventListener('blur',onHide);
+  }
+  document.addEventListener('visibilitychange',onHide);
+  window.addEventListener('pagehide',onHide);
+  window.addEventListener('blur',onHide);
+  // attempt the app
+  window.location.href=appURL;
+  // fallback only if we never went to background
+  setTimeout(function(){
+    cleanup();
+    if(!opened && !document.hidden){ window.location.href=webURL; }
+  },1500);
+};
 window.toggle=function(d,e){
   state[d][e]=!state[d][e];
   saveState();
