@@ -1106,7 +1106,7 @@ function exCard(di,idx,e,isCore){
   const on=state[di][idx];
   const lk=logKey(di,e.n);
   const log=logs[lk]||{w:'',r:'',last:''};
-  const vid=`<a class="ex-vid" href="https://www.youtube.com/results?search_query=${encodeURIComponent(e.q)}" rel="noopener" title="Watch demo on YouTube">${PLAY}<span class="vlbl">Video</span></a>`;
+  const vid=`<a class="ex-vid" href="https://www.youtube.com/results?search_query=${encodeURIComponent(e.q)}" target="_blank" rel="noopener" title="Watch demo on YouTube">${PLAY}<span class="vlbl">Video</span></a>`;
   const lastTxt=log.last?`<span class="log-last">Last: ${log.last}</span>`:'';
   // auto-fill inputs with last session's numbers (so you just nudge up)
   const wVal = (log.w!=='' && log.w!=null) ? log.w : (log.lw!=null?log.lw:'');
