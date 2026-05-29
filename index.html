@@ -665,7 +665,77 @@
   .backup-status{font-size:.78rem;font-weight:700;margin-top:9px;min-height:1em}
   .backup-status.ok{color:var(--green)}
   .backup-status.err{color:var(--accent-soft)}
-</style>
+
+  /* DASHBOARD TAB */
+  .dash-wrap{max-width:716px;margin:0 auto;padding:18px 22px 30px}
+  .dash-hero{
+    background:linear-gradient(135deg,var(--panel),var(--panel-2));
+    border:1px solid var(--line);border-radius:var(--radius);
+    padding:22px;margin-bottom:14px;text-align:center;
+  }
+  .dash-hero-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:6px}
+  .dash-hero-wt{font-family:'Bebas Neue';font-size:4rem;line-height:1;color:var(--accent)}
+  .dash-hero-wt small{font-size:1.6rem;color:var(--muted);margin-left:4px}
+  .dash-hero-change{font-size:1rem;font-weight:800;margin-top:6px}
+  .dash-hero-change.loss{color:var(--green)}
+  .dash-hero-change.gain{color:var(--accent)}
+  .dash-hero-change.same{color:var(--muted)}
+  .dash-hero-sub{font-size:.78rem;color:var(--muted);margin-top:4px}
+  .dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+  .dash-card{
+    background:linear-gradient(135deg,var(--panel),var(--panel-2));
+    border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;
+  }
+  .dash-card-ico{font-size:1.4rem;margin-bottom:6px}
+  .dash-card-val{font-family:'Bebas Neue';font-size:2.2rem;line-height:1;color:var(--accent)}
+  .dash-card-val.green{color:var(--green)}
+  .dash-card-val.gold{color:var(--gold)}
+  .dash-card-lbl{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-top:4px}
+  .dash-card-sub{font-size:.76rem;color:var(--muted);margin-top:3px}
+  .dash-highlight{
+    background:linear-gradient(135deg,var(--panel),var(--panel-2));
+    border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px 18px;margin-bottom:14px;
+  }
+  .dash-hl-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:10px}
+  .dash-days{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:14px}
+  .dash-day{
+    background:var(--panel-2);border:1px solid var(--line);border-radius:10px;
+    padding:8px 3px;text-align:center;
+  }
+  .dash-day span{display:block;font-size:.58rem;color:var(--muted);font-weight:700;text-transform:uppercase}
+  .dash-day b{display:block;font-size:.9rem;margin-top:2px}
+  .dash-empty{
+    text-align:center;padding:40px 20px;color:var(--muted);font-size:.88rem;line-height:1.6;
+  }
+  .dash-empty b{color:var(--txt)}
+  .dash-week-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);text-align:center;margin-bottom:14px}
+  .dash-streak{
+    background:linear-gradient(135deg,var(--panel),var(--panel-2));
+    border:1px solid var(--gold);border-radius:var(--radius);
+    padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;gap:14px;
+  }
+  .dash-streak-ico{font-size:1.8rem}
+  .dash-streak-txt{font-size:.86rem;color:var(--txt);line-height:1.4}
+  .dash-streak-txt b{color:var(--gold)}
+  .dash-bar-wrap{margin-bottom:14px}
+  .dash-bar-label{display:flex;justify-content:space-between;font-size:.76rem;color:var(--muted);margin-bottom:5px}
+  .dash-bar-label b{color:var(--txt)}
+  .dash-bar-track{background:var(--panel-2);border-radius:99px;height:10px;overflow:hidden}
+  .dash-bar-fill{height:100%;border-radius:99px;transition:width .6s ease;background:var(--green)}
+  .dash-bar-fill.pink{background:var(--accent)}
+  .dash-bar-fill.gold{background:var(--gold)}
+
+  
+  .dash-share-btn{
+    width:100%;background:var(--accent);border:none;color:#fff;
+    padding:16px;border-radius:var(--radius);font-family:'Archivo';font-weight:800;
+    font-size:1rem;cursor:pointer;margin-bottom:14px;letter-spacing:.02em;
+  }
+  .dash-share-btn:active{transform:scale(.99)}
+
+  </style>
 </head>
 <body>
 
@@ -683,6 +753,7 @@
   <button class="main-tab active" id="tabBtnWorkout" onclick="showTab('workout')">🏋️ Workout</button>
   <button class="main-tab" id="tabBtnMeals" onclick="showTab('meals')">🍽️ Meals</button>
   <button class="main-tab" id="tabBtnProgress" onclick="showTab('progress')">📈 Progress</button>
+  <button class="main-tab" id="tabBtnDash" onclick="showTab('dash')">🏆 Dashboard</button>
 </div>
 
 <div id="tabWorkout">
@@ -998,6 +1069,8 @@ function loadArchive(){ try{ const r=localStorage.getItem(ARCHIVE_KEY); if(r) re
 function saveArchive(a){ try{ localStorage.setItem(ARCHIVE_KEY, JSON.stringify(a)); }catch(e){} }
 
 // Snapshot any PAST-week data into the archive BEFORE the loaders delete it.
+function mondayOfDate(d){ const day=(d.getDay()+6)%7; const m=new Date(d); m.setDate(d.getDate()-day); m.setHours(0,0,0,0); return m; }
+function isoOfDate(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function archiveOldWeeks(){
   const cur=curWeekSuffix();
   const archive=loadArchive();
@@ -1006,6 +1079,7 @@ function archiveOldWeeks(){
   const prefixes={'split_':'workout','meals_':'meals','cardio_':'cardio','sched_':'sched'};
   keys.forEach(k=>{
     if(k===LOG_KEY) return;
+    // weekly keys (existing logic)
     for(const p in prefixes){
       if(k.startsWith(p)){
         const suf=k.slice(p.length);
@@ -1015,6 +1089,22 @@ function archiveOldWeeks(){
         if(!archive[isoKey]) archive[isoKey]={};
         try{ archive[isoKey][prefixes[p]]=JSON.parse(localStorage.getItem(k)); changed=true; }catch(e){}
       }
+    }
+    // daily water keys: water_YYYY-MM-DD
+    if(k.startsWith('water_')){
+      const datePart=k.slice(6); // YYYY-MM-DD
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(datePart)) return;
+      const d=new Date(datePart+'T12:00:00');
+      const weekMon=mondayOfDate(d);
+      const weekIso=isoOfDate(weekMon);
+      // skip if it belongs to the current week
+      const curIso=suffixToISOKey(cur);
+      if(weekIso===curIso) return;
+      if(!archive[weekIso]) archive[weekIso]={};
+      if(!Array.isArray(archive[weekIso].water)) archive[weekIso].water=Array(7).fill(0);
+      const dow=(d.getDay()+6)%7; // Mon=0..Sun=6
+      const oz=parseInt(localStorage.getItem(k))||0;
+      if(oz>0){ archive[weekIso].water[dow]=oz; changed=true; }
     }
   });
   if(changed) saveArchive(archive);
@@ -1339,7 +1429,7 @@ window.closeHist=function(){ document.getElementById('histModal').style.display=
 
 /* ---------- MAIN TAB SWITCHER ---------- */
 window.showTab=function(t){
-  ['workout','meals','progress'].forEach(name=>{
+  ['workout','meals','progress','dash'].forEach(name=>{
     const show=(name===t);
     const panel=document.getElementById('tab'+name.charAt(0).toUpperCase()+name.slice(1));
     if(panel) panel.style.display=show?'':'none';
@@ -1348,6 +1438,7 @@ window.showTab=function(t){
   });
   if(t==='progress') renderProgress();
   if(t==='meals') renderMeals();
+  if(t==='dash') renderDashboard();
 };
 
 /* ---------- WEEKLY WEIGHT TRACKING (persistent) ---------- */
@@ -1546,6 +1637,7 @@ function gatherBackup(){
     // record that a backup happened today
     try{ localStorage.setItem('last_backup', new Date().toISOString().slice(0,10)); }catch(e){}
     if(typeof refreshBackupBanner==='function') refreshBackupBanner();
+    if(typeof renderDashboard==='function') renderDashboard();
     setStatus(true, savedFile?'✓ Code copied AND a backup file was saved to your downloads.':'✓ Backup code created & copied. Save it in Notes/email.');
   }
   window.__doExport=doExport; // expose for the banner
@@ -1828,7 +1920,7 @@ let waterOz=loadWater();
 function loadWater(){
   try{ const r=localStorage.getItem(WATER_KEY); if(r!=null) return parseInt(r)||0; }catch(e){}
   // clear previous days
-  try{ Object.keys(localStorage).forEach(k=>{ if(k.startsWith('water_')&&k!==WATER_KEY) localStorage.removeItem(k); }); }catch(e){}
+  // old water keys are kept until archiveOldWeeks folds them in; no deletion here
   return 0;
 }
 function saveWater(){ try{localStorage.setItem(WATER_KEY,String(waterOz));}catch(e){} }
@@ -2059,6 +2151,383 @@ renderSchedule();
 renderWater();
 renderCheckin();
 refreshBackupBanner();
+
+/* ---------- DASHBOARD ---------- */
+function getPrevWeekISO(){
+  const m=mondayOf(new Date());
+  const prev=new Date(m); prev.setDate(prev.getDate()-7);
+  return prev.getFullYear()+'-'+String(prev.getMonth()+1).padStart(2,'0')+'-'+String(prev.getDate()).padStart(2,'0');
+}
+function getPrevPrevWeekISO(){
+  const m=mondayOf(new Date());
+  const pp=new Date(m); pp.setDate(pp.getDate()-14);
+  return pp.getFullYear()+'-'+String(pp.getMonth()+1).padStart(2,'0')+'-'+String(pp.getDate()).padStart(2,'0');
+}
+function totalItemsCount(){
+  let t=0; PROGRAM.forEach(d=>{ t+=d.ex.length+(d.core?d.core.length:0); }); return t;
+}
+function renderDashboard(){
+  const el=document.getElementById('dashContent');
+  if(!el) return;
+  const prevISO=getPrevWeekISO();
+  const ppISO=getPrevPrevWeekISO();
+  const arc=loadArchive();
+  const weights=loadWeights();
+  const s=summarizeWeek(prevISO);
+
+  // weight this week and delta
+  const wThis=weights[prevISO]||null;
+  const wPrev=weights[ppISO]||null;
+  const TOTAL=totalItemsCount();
+
+  // pull raw archived data for extra stats
+  const raw=arc[prevISO]||{};
+  // water stats (needed for grid card below)
+  const waterArr=Array.isArray(raw.water)?raw.water:Array(7).fill(0);
+  const waterDaysHit=waterArr.filter(oz=>oz>=GALLON_OZ).length;
+  const waterTotal=waterArr.reduce((a,b)=>a+b,0);
+  const waterAvg=waterArr.filter(oz=>oz>0).length>0?Math.round(waterTotal/waterArr.filter(oz=>oz>0).length):0;
+  const waterPct=Math.min(100,Math.round(waterDaysHit/7*100));
+
+  // workout items done
+  let itemsDone=0, itemsTotal=0;
+  if(Array.isArray(raw.workout)){
+    raw.workout.forEach((d,i)=>{
+      const dayTotal=PROGRAM[i]?(PROGRAM[i].ex.length+(PROGRAM[i].core?PROGRAM[i].core.length:0)):0;
+      itemsTotal+=dayTotal;
+      if(Array.isArray(d)) itemsDone+=d.filter(Boolean).length;
+    });
+  }
+  const pctWorkout=itemsTotal>0?Math.round(itemsDone/itemsTotal*100):0;
+
+  // meal compliance
+  let mealsHit=0,mealTotal=0;
+  if(Array.isArray(raw.meals)){
+    raw.meals.forEach(d=>{ if(Array.isArray(d)){ mealTotal+=d.length; mealsHit+=d.filter(Boolean).length; } });
+  }
+  const pctMeals=mealTotal>0?Math.round(mealsHit/mealTotal*100):0;
+
+  // cardio
+  let cardioSess=0,cardioMin=0;
+  if(Array.isArray(raw.cardio)){
+    raw.cardio.forEach(c=>{ if(c&&c.done){ cardioSess++; cardioMin+=parseInt(c.min)||0; } });
+  }
+
+  // daily schedule
+  const DAY_NAMES=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const SCHED_ICO={0:'·',1:'🏋️',2:'🏃',3:'🏋️🏃'};
+
+  // no data state
+  if(!s.has && wThis==null){
+    el.innerHTML=`
+      <div class="dash-empty">
+        <div style="font-size:2.5rem;margin-bottom:12px">📊</div>
+        <b>No data yet for last week.</b><br><br>
+        This dashboard updates every Monday when a new week begins.<br>
+        Log your workouts, meals, and weight this week — it'll all show up here next Monday.
+      </div>`;
+    return;
+  }
+
+  const prevDate=new Date(prevISO+'T12:00:00');
+  const prevLabel=prevDate.toLocaleDateString(undefined,{month:'long',day:'numeric'});
+
+  let html=`<div class="dash-week-label">Week of ${prevLabel}</div>`;
+
+  // HERO — weight
+  if(wThis!=null){
+    let changeHTML='';
+    if(wPrev!=null){
+      const diff=(wThis-wPrev).toFixed(1);
+      const cls=diff<0?'loss':diff>0?'gain':'same';
+      const arrow=diff<0?'▼ ':'▲ ';
+      const abs=Math.abs(diff);
+      changeHTML=`<div class="dash-hero-change ${cls}">${diff<0?arrow+abs+' lb lost this week':diff>0?arrow+abs+' lb gained':'No change from prior week'}</div>`;
+    }
+    const totalLost=(wThis-START_WEIGHT).toFixed(1);
+    const toGoal=(wThis-GOAL_WEIGHT).toFixed(1);
+    html+=`
+      <div class="dash-hero">
+        <div class="dash-hero-label">Weigh-In</div>
+        <div class="dash-hero-wt">${wThis}<small>lb</small></div>
+        ${changeHTML}
+        <div class="dash-hero-sub">${totalLost<0?Math.abs(totalLost)+' lb lost total · ':''} ${toGoal>0?toGoal+' lb to goal':' 🎉 Goal reached!'}</div>
+      </div>`;
+  }
+
+  // STAT GRID
+  html+=`<div class="dash-grid">`;
+
+  // workouts
+  html+=`<div class="dash-card">
+    <div class="dash-card-ico">🏋️</div>
+    <div class="dash-card-val">${s.workouts}</div>
+    <div class="dash-card-lbl">Workouts done</div>
+    <div class="dash-card-sub">${itemsDone} of ${itemsTotal||TOTAL} exercises</div>
+  </div>`;
+
+  // cardio
+  html+=`<div class="dash-card">
+    <div class="dash-card-ico">🏃</div>
+    <div class="dash-card-val green">${cardioSess}</div>
+    <div class="dash-card-lbl">Cardio sessions</div>
+    <div class="dash-card-sub">${cardioMin} minutes total</div>
+  </div>`;
+
+  // meals
+  html+=`<div class="dash-card">
+    <div class="dash-card-ico">🍽️</div>
+    <div class="dash-card-val gold">${pctMeals}%</div>
+    <div class="dash-card-lbl">Meal compliance</div>
+    <div class="dash-card-sub">${mealsHit} of ${mealTotal||'—'} meals hit</div>
+  </div>`;
+
+  // active days
+  const activeDays=s.schedule?s.schedule.filter(x=>x!=='Rest').length:0;
+  html+=`<div class="dash-card">
+    <div class="dash-card-ico">📅</div>
+    <div class="dash-card-val">${activeDays}</div>
+    <div class="dash-card-lbl">Active days</div>
+    <div class="dash-card-sub">out of 7 days</div>
+  </div>`;
+
+  // water card
+  html+=`<div class="dash-card">
+    <div class="dash-card-ico">💧</div>
+    <div class="dash-card-val" style="color:#3aa8c9">${waterDaysHit}/7</div>
+    <div class="dash-card-lbl">Gallon days hit</div>
+    <div class="dash-card-sub">Avg ${waterAvg} oz on active days</div>
+  </div>`;
+
+  html+=`</div>`; // /dash-grid
+
+  // PROGRESS BARS
+  html+=`<div class="dash-highlight">
+    <div class="dash-hl-title">Week at a glance</div>`;
+
+  html+=`<div class="dash-bar-wrap">
+    <div class="dash-bar-label"><span>💪 Workout completion</span><b>${pctWorkout}%</b></div>
+    <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${pctWorkout}%"></div></div>
+  </div>`;
+
+  if(mealTotal>0) html+=`<div class="dash-bar-wrap">
+    <div class="dash-bar-label"><span>🍽️ Meal compliance</span><b>${pctMeals}%</b></div>
+    <div class="dash-bar-track"><div class="dash-bar-fill gold" style="width:${pctMeals}%"></div></div>
+  </div>`;
+
+  if(cardioSess>0) html+=`<div class="dash-bar-wrap">
+    <div class="dash-bar-label"><span>🏃 Cardio</span><b>${cardioSess} sessions · ${cardioMin} min</b></div>
+    <div class="dash-bar-track"><div class="dash-bar-fill pink" style="width:${Math.min(100,Math.round(cardioSess/5*100))}%"></div></div>
+  </div>`;
+
+  html+=`<div class="dash-bar-wrap">
+    <div class="dash-bar-label"><span>💧 Water goal days hit</span><b>${waterDaysHit}/7 days</b></div>
+    <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${waterPct}%;background:#3aa8c9"></div></div>
+  </div>`;
+
+  html+=`</div>`; // /dash-highlight
+
+  // DAILY BREAKDOWN
+  if(s.schedule){
+    html+=`<div class="dash-highlight">
+      <div class="dash-hl-title">Daily breakdown</div>
+      <div class="dash-days">`;
+    s.schedule.forEach((st,i)=>{
+      const ico=SCHED_ICO[raw.sched&&raw.sched[i]!=null?raw.sched[i]:(['Rest','Workout','Cardio','Both'].indexOf(st))];
+      html+=`<div class="dash-day"><span>${DAY_NAMES[i]}</span><b>${ico||'·'}</b></div>`;
+    });
+    html+=`</div></div>`;
+  }
+
+  // HIGHLIGHT CALLOUT
+  const highlights=[];
+  if(wPrev!=null&&wThis!=null&&(wThis-wPrev)<-0.5) highlights.push(`Lost <b>${Math.abs((wThis-wPrev).toFixed(1))} lb</b> this week 🔥`);
+  if(pctWorkout===100) highlights.push(`<b>100% workout completion</b> — perfect week! 💪`);
+  else if(pctWorkout>=75) highlights.push(`<b>${pctWorkout}% workout completion</b> — strong week`);
+  if(pctMeals>=90) highlights.push(`<b>${pctMeals}% meal compliance</b> — dialed in 🍽️`);
+  if(cardioMin>=150) highlights.push(`<b>${cardioMin} min of cardio</b> this week 🏃`);
+  if(s.workouts>=4) highlights.push(`Hit all <b>${s.workouts} workout days</b> this week`);
+
+  if(highlights.length>0){
+    html+=`<div class="dash-streak">
+      <div class="dash-streak-ico">⭐</div>
+      <div class="dash-streak-txt">${highlights[0]}</div>
+    </div>`;
+  }
+
+  // SHARE TO STORY button (top of dashboard)
+  html = `<button class="dash-share-btn" onclick="shareStory()">📲 Share to Story</button>` + html;
+  // stash stats for the canvas generator
+  window.__dashStats = {
+    weekLabel: prevLabel,
+    weight: wThis,
+    weightChange: (wPrev!=null && wThis!=null) ? +(wThis-wPrev).toFixed(1) : null,
+    totalLost: (wThis!=null) ? +(START_WEIGHT - wThis).toFixed(1) : null,
+    toGoal: (wThis!=null) ? +(wThis - GOAL_WEIGHT).toFixed(1) : null,
+    workouts: s.workouts,
+    cardioSess: cardioSess,
+    cardioMin: cardioMin,
+    pctWorkout: pctWorkout,
+    pctMeals: pctMeals,
+    waterDaysHit: waterDaysHit,
+    highlight: (highlights.length>0) ? highlights[0].replace(/<[^>]+>/g,'') : null
+  };
+
+  el.innerHTML=html;
+}
+
+
+/* ---------- SHARE TO IG STORY ---------- */
+function cssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#ff2d4d'; }
+
+async function shareStory(){
+  const d = window.__dashStats;
+  if(!d){ alert('Open the Dashboard first.'); return; }
+
+  const W=1080, H=1920;
+  const canvas=document.createElement('canvas');
+  canvas.width=W; canvas.height=H;
+  const ctx=canvas.getContext('2d');
+
+  const bg=cssVar('--bg')||'#0c0d10';
+  const panel=cssVar('--panel')||'#14161b';
+  const accent=cssVar('--accent')||'#ff2d4d';
+  const gold=cssVar('--gold')||'#ffb800';
+  const green=cssVar('--green')||'#22d57e';
+  const txt=cssVar('--txt')||'#f4f5f7';
+  const muted=cssVar('--muted')||'#878d99';
+
+  // ---- PREMIUM MATTE BACKGROUND ----
+  // deep matte base (slightly darker than app bg for richness)
+  const baseGrad=ctx.createLinearGradient(0,0,0,H);
+  baseGrad.addColorStop(0,'#121317'); baseGrad.addColorStop(1,'#0a0b0d');
+  ctx.fillStyle=baseGrad; ctx.fillRect(0,0,W,H);
+  // soft elliptical spotlight behind the hero number
+  const spot=ctx.createRadialGradient(W/2,520,40,W/2,520,720);
+  spot.addColorStop(0, hexA(accent,0.20)); spot.addColorStop(0.6, hexA(accent,0.05)); spot.addColorStop(1, hexA(accent,0));
+  ctx.save(); ctx.translate(W/2,520); ctx.scale(1.25,1); ctx.translate(-W/2,-520);
+  ctx.fillStyle=spot; ctx.fillRect(0,0,W,1100); ctx.restore();
+  // subtle film grain
+  (function(){
+    const gsize=160; const gc=document.createElement('canvas'); gc.width=gsize; gc.height=gsize;
+    const gx=gc.getContext('2d'); const idata=gx.createImageData(gsize,gsize);
+    for(let i=0;i<idata.data.length;i+=4){ const v=Math.random()*255; idata.data[i]=v; idata.data[i+1]=v; idata.data[i+2]=v; idata.data[i+3]=10; }
+    gx.putImageData(idata,0,0);
+    const pat=ctx.createPattern(gc,'repeat'); ctx.fillStyle=pat; ctx.fillRect(0,0,W,H);
+  })();
+
+  ctx.textAlign='center';
+
+  // header
+  ctx.fillStyle=muted; ctx.font='600 34px Archivo, sans-serif';
+  ctx.fillText('WEEKLY RECAP', W/2, 180);
+  ctx.fillStyle=txt; ctx.font='700 46px Archivo, sans-serif';
+  ctx.fillText('Week of '+d.weekLabel, W/2, 240);
+
+  // hero — show only the CHANGE this week (no absolute weight)
+  let y=430;
+  if(d.weightChange!=null){
+    ctx.fillStyle=muted; ctx.font='600 36px Archivo, sans-serif';
+    ctx.fillText('THIS WEEK', W/2, y-90);
+    const ch=d.weightChange;
+    const isLoss = ch<0;
+    const isGain = ch>0;
+    const col = isLoss ? green : isGain ? accent : muted;
+    const sign = isLoss ? '−' : isGain ? '+' : '±';
+    const numTxt = sign + Math.abs(ch).toFixed(1);
+    ctx.fillStyle=col; ctx.font='900 220px "Bebas Neue", Archivo, sans-serif';
+    ctx.fillText(numTxt, W/2, y+70);
+    ctx.fillStyle=muted; ctx.font='600 50px Archivo, sans-serif';
+    ctx.fillText('lb', W/2, y+130);
+    y+=200;
+    ctx.fillStyle=col; ctx.font='800 56px Archivo, sans-serif';
+    ctx.fillText(isLoss ? 'down this week' : isGain ? 'up this week' : 'no change', W/2, y);
+    y+=80;
+  } else {
+    // no week-over-week change available yet
+    ctx.fillStyle=muted; ctx.font='600 44px Archivo, sans-serif';
+    ctx.fillText('Logging in progress', W/2, y);
+    y=380;
+  }
+
+  // stat cards (2x2)
+  y+=40;
+  const cards=[
+    {ico:'WORKOUTS', val:String(d.workouts), sub:d.pctWorkout+'% complete', col:accent},
+    {ico:'CARDIO', val:String(d.cardioSess), sub:d.cardioMin+' min', col:green},
+    {ico:'MEALS', val:d.pctMeals+'%', sub:'compliance', col:gold},
+    {ico:'WATER', val:d.waterDaysHit+'/7', sub:'gallon days', col:'#3aa8c9'}
+  ];
+  const cw=460, ch=240, gap=40;
+  const startX=(W-(cw*2+gap))/2;
+  cards.forEach((c,i)=>{
+    const cx=startX+(i%2)*(cw+gap);
+    const cy=y+Math.floor(i/2)*(ch+gap);
+    // frosted-glass card: translucent fill, fine border, top highlight edge
+    roundRect(ctx,cx,cy,cw,ch,28); ctx.fillStyle='rgba(255,255,255,0.05)'; ctx.fill();
+    roundRect(ctx,cx,cy,cw,ch,28); ctx.strokeStyle='rgba(255,255,255,0.12)'; ctx.lineWidth=2; ctx.stroke();
+    ctx.save(); ctx.beginPath(); ctx.moveTo(cx+26,cy+2); ctx.lineTo(cx+cw-26,cy+2);
+    ctx.strokeStyle='rgba(255,255,255,0.22)'; ctx.lineWidth=2; ctx.stroke(); ctx.restore();
+    ctx.fillStyle=muted; ctx.font='700 30px Archivo, sans-serif'; ctx.textAlign='center';
+    ctx.fillText(c.ico, cx+cw/2, cy+58);
+    ctx.fillStyle=c.col; ctx.font='900 110px "Bebas Neue", Archivo, sans-serif';
+    ctx.fillText(c.val, cx+cw/2, cy+162);
+    ctx.fillStyle=muted; ctx.font='500 32px Archivo, sans-serif';
+    ctx.fillText(c.sub, cx+cw/2, cy+212);
+  });
+  y+=ch*2+gap+90;
+
+  // highlight banner
+  if(d.highlight){
+    const bx=80, bw=W-160, bh=160;
+    roundRect(ctx,bx,y,bw,bh,28); ctx.fillStyle=hexA(gold,0.14); ctx.fill();
+    ctx.strokeStyle=gold; ctx.lineWidth=3; roundRect(ctx,bx,y,bw,bh,28); ctx.stroke();
+    ctx.fillStyle=txt; ctx.font='700 40px Archivo, sans-serif'; ctx.textAlign='center';
+    wrapText(ctx, '⭐ '+d.highlight, W/2, y+70, bw-80, 50);
+  }
+
+  // footer
+  ctx.fillStyle=muted; ctx.font='600 32px Archivo, sans-serif'; ctx.textAlign='center';
+  ctx.fillText('My Fitness Plan', W/2, H-90);
+
+  // export
+  canvas.toBlob(async (blob)=>{
+    if(!blob){ alert('Could not generate image. Try a screenshot instead.'); return; }
+    const file=new File([blob], 'weekly-recap.png', {type:'image/png'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      try{ await navigator.share({files:[file], title:'My Weekly Recap'}); return; }catch(e){ /* user cancelled or failed -> fall through */ }
+    }
+    // fallback: download
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a'); a.href=url; a.download='weekly-recap.png';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url), 2000);
+  }, 'image/png');
+}
+
+function hexA(hex,a){
+  hex=hex.replace('#',''); if(hex.length===3) hex=hex.split('').map(c=>c+c).join('');
+  const r=parseInt(hex.substr(0,2),16), g=parseInt(hex.substr(2,2),16), b=parseInt(hex.substr(4,2),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+function roundRect(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function wrapText(ctx,text,x,y,maxW,lh){
+  const words=text.split(' '); let line=''; const lines=[];
+  for(const w of words){ const t=line?line+' '+w:w; if(ctx.measureText(t).width>maxW && line){ lines.push(line); line=w; } else line=t; }
+  if(line) lines.push(line);
+  // vertically center the block within the banner (banner is 160 tall starting at y-? ; here y is top+70)
+  const blockH=(lines.length-1)*lh;
+  let yy=y + (lines.length===1?20:0) - blockH/2 + (lines.length>1?lh/2:0);
+  lines.forEach((l,i)=> ctx.fillText(l, x, yy + i*lh));
+}
+
 </script>
+
+<div id="tabDash" style="display:none">
+<div class="dash-wrap">
+  <div id="dashContent"></div>
+</div>
+</div><!-- /tabDash -->
+
 </body>
 </html>
