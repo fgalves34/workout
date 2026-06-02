@@ -2442,9 +2442,9 @@ async function shareStory(){
 
   // header
   ctx.fillStyle=muted; ctx.font='600 34px Archivo, sans-serif';
-  ctx.fillText('WEEKLY RECAP', W/2, 180);
+  ctx.fillText('WEEKLY RECAP', W/2, 150);
   ctx.fillStyle=txt; ctx.font='700 46px Archivo, sans-serif';
-  ctx.fillText('Week of '+d.weekLabel, W/2, 240);
+  ctx.fillText('Week of '+d.weekLabel, W/2, 205);
 
   // hero — circular ring card with the change inside
   let y=430;
@@ -2467,7 +2467,8 @@ async function shareStory(){
   }
 
   if(hasHero){
-    const cx=W/2, ccy=470, R=240;
+    // Push the ring lower so it never collides with the header/title
+    const cx=W/2, ccy=540, R=240;
     // faint track ring
     ctx.beginPath(); ctx.arc(cx,ccy,R,0,Math.PI*2);
     ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.lineWidth=14; ctx.stroke();
@@ -2478,12 +2479,28 @@ async function shareStory(){
     // label inside top
     ctx.fillStyle=muted; ctx.font='600 32px Archivo, sans-serif';
     ctx.fillText(heroLabel, cx, ccy-90);
-    // big number center
-    ctx.fillStyle=heroCol; ctx.font='900 150px "Bebas Neue", Archivo, sans-serif';
-    ctx.fillText(heroNum, cx, ccy+30);
-    // lb
-    ctx.fillStyle=muted; ctx.font='600 40px Archivo, sans-serif';
-    ctx.fillText('lb', cx, ccy+85);
+    // big number + unit centered as one inline group
+    const heroNumFont='900 150px "Bebas Neue", Archivo, sans-serif';
+    const heroUnitFont='700 44px Archivo, sans-serif';
+    const heroUnitGap=18;
+    const heroBaseY=ccy+30;
+
+    ctx.textBaseline='alphabetic';
+    ctx.font=heroNumFont;
+    const heroNumW=ctx.measureText(heroNum).width;
+    ctx.font=heroUnitFont;
+    const heroUnitW=ctx.measureText('lb').width;
+    const heroStartX=cx-(heroNumW+heroUnitGap+heroUnitW)/2;
+
+    ctx.textAlign='left';
+    ctx.fillStyle=heroCol;
+    ctx.font=heroNumFont;
+    ctx.fillText(heroNum, heroStartX, heroBaseY);
+
+    ctx.fillStyle=muted;
+    ctx.font=heroUnitFont;
+    ctx.fillText('lb', heroStartX+heroNumW+heroUnitGap, heroBaseY-18);
+    ctx.textAlign='center';
     // caption below the circle
     ctx.fillStyle=heroCol; ctx.font='800 50px Archivo, sans-serif';
     ctx.fillText(heroCaption, cx, ccy+R+70);
