@@ -2425,11 +2425,10 @@ async function shareStory(){
   const baseGrad=ctx.createLinearGradient(0,0,0,H);
   baseGrad.addColorStop(0,'#121317'); baseGrad.addColorStop(1,'#0a0b0d');
   ctx.fillStyle=baseGrad; ctx.fillRect(0,0,W,H);
-  // soft elliptical spotlight behind the hero number
-  const spot=ctx.createRadialGradient(W/2,520,40,W/2,520,720);
-  spot.addColorStop(0, hexA(accent,0.20)); spot.addColorStop(0.6, hexA(accent,0.05)); spot.addColorStop(1, hexA(accent,0));
-  ctx.save(); ctx.translate(W/2,520); ctx.scale(1.25,1); ctx.translate(-W/2,-520);
-  ctx.fillStyle=spot; ctx.fillRect(0,0,W,1100); ctx.restore();
+  // soft red bloom behind the hero — visible but fades before the cards
+  const spot=ctx.createRadialGradient(W/2,430,50,W/2,430,700);
+  spot.addColorStop(0, hexA(accent,0.16)); spot.addColorStop(0.5, hexA(accent,0.06)); spot.addColorStop(1, hexA(accent,0));
+  ctx.fillStyle=spot; ctx.fillRect(0,0,W,900);
   // subtle film grain
   (function(){
     const gsize=160; const gc=document.createElement('canvas'); gc.width=gsize; gc.height=gsize;
@@ -2466,15 +2465,24 @@ async function shareStory(){
     ctx.fillStyle=col; ctx.font='800 56px Archivo, sans-serif';
     ctx.fillText(isLoss ? 'down this week' : isGain ? 'up this week' : 'no change', W/2, y);
     y+=80;
-  } else if(d.weight!=null){
-    // have a weight but no prior week to compare
+  } else if(d.totalLost!=null){
+    // no week-over-week, but show total change from start weight as colored number
+    const ch=-d.totalLost; // totalLost is START-current; change = current-START
+    const isLoss = ch<0;
+    const isGain = ch>0;
+    const col = isLoss ? green : isGain ? accent : muted;
+    const sign = isLoss ? '−' : isGain ? '+' : '±';
+    const numTxt = sign + Math.abs(ch).toFixed(1);
     ctx.fillStyle=muted; ctx.font='600 36px Archivo, sans-serif';
-    ctx.fillText('CURRENT WEIGHT', W/2, y-90);
-    ctx.fillStyle=accent; ctx.font='900 180px "Bebas Neue", Archivo, sans-serif';
-    ctx.fillText(String(d.weight), W/2, y+50);
+    ctx.fillText('TOTAL CHANGE', W/2, y-90);
+    ctx.fillStyle=col; ctx.font='900 220px "Bebas Neue", Archivo, sans-serif';
+    ctx.fillText(numTxt, W/2, y+70);
     ctx.fillStyle=muted; ctx.font='600 50px Archivo, sans-serif';
-    ctx.fillText('lb', W/2, y+110);
+    ctx.fillText('lb', W/2, y+130);
     y+=200;
+    ctx.fillStyle=col; ctx.font='800 56px Archivo, sans-serif';
+    ctx.fillText(isLoss ? 'down since start' : isGain ? 'up since start' : 'at start weight', W/2, y);
+    y+=80;
   } else {
     // no weight at all — shift cards up
     ctx.fillStyle=muted; ctx.font='600 36px Archivo, sans-serif';
