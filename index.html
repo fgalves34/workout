@@ -2446,45 +2446,49 @@ async function shareStory(){
   ctx.fillStyle=txt; ctx.font='700 46px Archivo, sans-serif';
   ctx.fillText('Week of '+d.weekLabel, W/2, 240);
 
-  // hero — show only the CHANGE this week (no absolute weight)
+  // hero — circular ring card with the change inside
   let y=430;
+  // determine what to show
+  let heroLabel='', heroNum='', heroCol=muted, heroCaption='', hasHero=true;
   if(d.weightChange!=null){
-    ctx.fillStyle=muted; ctx.font='600 36px Archivo, sans-serif';
-    ctx.fillText('THIS WEEK', W/2, y-90);
-    const ch=d.weightChange;
-    const isLoss = ch<0;
-    const isGain = ch>0;
-    const col = isLoss ? green : isGain ? accent : muted;
-    const sign = isLoss ? '−' : isGain ? '+' : '±';
-    const numTxt = sign + Math.abs(ch).toFixed(1);
-    ctx.fillStyle=col; ctx.font='900 220px "Bebas Neue", Archivo, sans-serif';
-    ctx.fillText(numTxt, W/2, y+70);
-    ctx.fillStyle=muted; ctx.font='600 50px Archivo, sans-serif';
-    ctx.fillText('lb', W/2, y+130);
-    y+=200;
-    ctx.fillStyle=col; ctx.font='800 56px Archivo, sans-serif';
-    ctx.fillText(isLoss ? 'down this week' : isGain ? 'up this week' : 'no change', W/2, y);
-    y+=80;
+    const ch=d.weightChange; const isLoss=ch<0, isGain=ch>0;
+    heroCol = isLoss?green:isGain?accent:muted;
+    heroLabel='THIS WEEK';
+    heroNum=(isLoss?'−':isGain?'+':'±')+Math.abs(ch).toFixed(1);
+    heroCaption=isLoss?'down this week':isGain?'up this week':'no change';
   } else if(d.totalLost!=null){
-    // no week-over-week, but show total change from start weight as colored number
-    const ch=-d.totalLost; // totalLost is START-current; change = current-START
-    const isLoss = ch<0;
-    const isGain = ch>0;
-    const col = isLoss ? green : isGain ? accent : muted;
-    const sign = isLoss ? '−' : isGain ? '+' : '±';
-    const numTxt = sign + Math.abs(ch).toFixed(1);
-    ctx.fillStyle=muted; ctx.font='600 36px Archivo, sans-serif';
-    ctx.fillText('TOTAL CHANGE', W/2, y-90);
-    ctx.fillStyle=col; ctx.font='900 220px "Bebas Neue", Archivo, sans-serif';
-    ctx.fillText(numTxt, W/2, y+70);
-    ctx.fillStyle=muted; ctx.font='600 50px Archivo, sans-serif';
-    ctx.fillText('lb', W/2, y+130);
-    y+=200;
-    ctx.fillStyle=col; ctx.font='800 56px Archivo, sans-serif';
-    ctx.fillText(isLoss ? 'down since start' : isGain ? 'up since start' : 'at start weight', W/2, y);
-    y+=80;
+    const ch=-d.totalLost; const isLoss=ch<0, isGain=ch>0;
+    heroCol = isLoss?green:isGain?accent:muted;
+    heroLabel='TOTAL CHANGE';
+    heroNum=(isLoss?'−':isGain?'+':'±')+Math.abs(ch).toFixed(1);
+    heroCaption=isLoss?'down since start':isGain?'up since start':'at start weight';
   } else {
-    // no weight at all — shift cards up
+    hasHero=false;
+  }
+
+  if(hasHero){
+    const cx=W/2, ccy=470, R=240;
+    // faint track ring
+    ctx.beginPath(); ctx.arc(cx,ccy,R,0,Math.PI*2);
+    ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.lineWidth=14; ctx.stroke();
+    // colored arc (most of the circle, leaving a small gap at the bottom)
+    ctx.beginPath(); ctx.arc(cx,ccy,R, Math.PI*0.75, Math.PI*0.25);
+    ctx.strokeStyle=heroCol; ctx.lineWidth=14; ctx.lineCap='round'; ctx.stroke();
+    ctx.lineCap='butt';
+    // label inside top
+    ctx.fillStyle=muted; ctx.font='600 32px Archivo, sans-serif';
+    ctx.fillText(heroLabel, cx, ccy-90);
+    // big number center
+    ctx.fillStyle=heroCol; ctx.font='900 150px "Bebas Neue", Archivo, sans-serif';
+    ctx.fillText(heroNum, cx, ccy+30);
+    // lb
+    ctx.fillStyle=muted; ctx.font='600 40px Archivo, sans-serif';
+    ctx.fillText('lb', cx, ccy+85);
+    // caption below the circle
+    ctx.fillStyle=heroCol; ctx.font='800 50px Archivo, sans-serif';
+    ctx.fillText(heroCaption, cx, ccy+R+70);
+    y=ccy+R+130;
+  } else {
     ctx.fillStyle=muted; ctx.font='600 36px Archivo, sans-serif';
     ctx.fillText('WEEKLY STATS', W/2, y-60);
     y=380;
