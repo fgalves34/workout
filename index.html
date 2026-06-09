@@ -224,6 +224,34 @@
     font-size:.74rem;color:var(--green);font-weight:700;
     background:rgba(34,213,126,.1);padding:5px 10px;border-radius:8px;
   }
+  /* progressive set tracking */
+  .sets-wrap{ padding:0 16px 8px 60px; display:flex; flex-direction:column; gap:8px; }
+  .set-done{
+    display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--txt);
+    background:rgba(34,213,126,.08);border:1px solid rgba(34,213,126,.25);
+    border-radius:9px;padding:8px 12px;font-weight:600;
+  }
+  .set-done .set-tag{
+    font-family:'Bebas Neue',sans-serif;letter-spacing:.5px;font-size:.8rem;
+    color:var(--green);background:rgba(34,213,126,.14);
+    padding:2px 8px;border-radius:6px;font-weight:400;
+  }
+  .set-done .set-x{color:var(--muted)}
+  .set-done b{color:var(--txt)}
+  .set-undo{
+    margin-left:auto;background:transparent;border:none;color:var(--muted);
+    font-size:1.05rem;cursor:pointer;padding:2px 6px;border-radius:6px;line-height:1;
+  }
+  .set-undo:active{background:var(--panel-2);color:var(--accent)}
+  .set-active-lbl{
+    font-size:.74rem;font-weight:700;letter-spacing:.04em;color:var(--accent-soft);
+    text-transform:uppercase;margin-bottom:2px;
+  }
+  .set-active .log-row{ padding:0; }
+  .set-complete{
+    font-size:.84rem;font-weight:700;color:var(--green);
+    background:rgba(34,213,126,.1);padding:8px 12px;border-radius:9px;text-align:center;
+  }
 
   /* WEEK PREVIEW */
   .preview-toggle{
@@ -1149,7 +1177,7 @@ function loadState(){
     }
   }catch(e){}
   try{
-    Object.keys(localStorage).forEach(k=>{ if(k.startsWith('split_')&&k!==WEEK_KEY&&k!==LOG_KEY) localStorage.removeItem(k); });
+    Object.keys(localStorage).forEach(k=>{ if(k.startsWith('split_')&&k!==WEEK_KEY&&k!==LOG_KEY&&k!=='split_weights') localStorage.removeItem(k); });
   }catch(e){}
   return PROGRAM.map((d,i)=>Array(dayItems(i)).fill(false));
 }
@@ -1161,6 +1189,30 @@ function loadLogs(){
 }
 function saveLogs(){ try{localStorage.setItem(LOG_KEY,JSON.stringify(logs));}catch(e){} }
 function logKey(d,name){ return d+'::'+name; }
+
+/* ---- WEEKLY SET TRACKING (resets each Monday) ---- */
+const SETPROG_KEY='setprog_'+mondayStr(new Date());
+function loadSetProg(){
+  try{ const r=localStorage.getItem(SETPROG_KEY); if(r) return JSON.parse(r); }catch(e){}
+  try{ Object.keys(localStorage).forEach(k=>{ if(k.startsWith('setprog_')&&k!==SETPROG_KEY) localStorage.removeItem(k); }); }catch(e){}
+  return {};
+}
+let setProg=loadSetProg();
+function saveSetProg(){ try{ localStorage.setItem(SETPROG_KEY, JSON.stringify(setProg)); }catch(e){} }
+function parseSets(scheme){
+  const parts=String(scheme).split('\u00d7');
+  const count=Math.max(1, parseInt((parts[0]||'').trim())||1);
+  let reps=[];
+  if(parts[1]) reps=parts[1].split(',').map(s=>s.trim()).filter(Boolean);
+  if(reps.length===0) reps=Array(count).fill('');
+  else if(reps.length===1) reps=Array(count).fill(reps[0]);
+  else if(reps.length<count){ while(reps.length<count) reps.push(reps[reps.length-1]); }
+  return {count, reps};
+}
+function exSchemeAt(di,idx){
+  const all=PROGRAM[di].ex.concat(PROGRAM[di].core||[]);
+  return all[idx] ? all[idx].s : '';
+}
 
 /* ---------- RENDER ---------- */
 const PLAY=`<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`;
@@ -1194,14 +1246,36 @@ function overloadHint(log){
 }
 
 function exCard(di,idx,e,isCore){
-  const on=state[di][idx];
   const lk=logKey(di,e.n);
-  const log=logs[lk]||{w:'',r:'',last:''};
+  const log=logs[lk]||{last:''};
+  const done=Array.isArray(setProg[lk])?setProg[lk]:[];
+  const sch=parseSets(e.s); const count=sch.count, reps=sch.reps;
+  const allDone=done.length>=count;
+  const on=state[di][idx]||allDone;
+  const nm=e.n.replace(/'/g,"\\'");
   const vid=`<button class="ex-vid" onclick="openYT('${encodeURIComponent(e.q)}')" title="Watch demo on YouTube">${PLAY}<span class="vlbl">Video</span></button>`;
   const lastTxt=log.last?`<span class="log-last">Last: ${log.last}</span>`:'';
-  // auto-fill inputs with last session's numbers (so you just nudge up)
-  const wVal = (log.w!=='' && log.w!=null) ? log.w : (log.lw!=null?log.lw:'');
-  const rVal = (log.r!=='' && log.r!=null) ? log.r : (log.lr!=null?log.lr:'');
+  let setsHTML='';
+  done.forEach((st,i)=>{
+    setsHTML+=`<div class="set-done"><span class="set-tag">SET ${i+1}</span><b>${st.w}</b> lb <span class="set-x">\u00d7</span> <b>${st.r}</b> reps<button class="set-undo" onclick="undoSet(${di},${idx},'${nm}')" title="Undo set">\u21ba</button></div>`;
+  });
+  if(!allDone){
+    const sn=done.length+1;
+    const tgt=reps[done.length]||'';
+    const prefW = done.length>0 ? done[done.length-1].w : (log.lw!=null?log.lw:'');
+    setsHTML+=`
+      <div class="set-active">
+        <div class="set-active-lbl">Set ${sn} of ${count}${tgt?` \u00b7 target ${tgt} reps`:''}</div>
+        <div class="log-row">
+          <input class="log-in" id="sw_${di}_${idx}" type="number" inputmode="decimal" placeholder="lb" value="${prefW}">
+          <span class="log-x">\u00d7</span>
+          <input class="log-in" id="sr_${di}_${idx}" type="number" inputmode="numeric" placeholder="${tgt||'reps'}" value="${tgt}">
+          <button class="log-save" onclick="logSet(${di},${idx},'${nm}')">Log set ${sn}</button>
+        </div>
+      </div>`;
+  } else {
+    setsHTML+=`<div class="set-complete">\u2713 All ${count} sets logged</div>`;
+  }
   return `
   <div class="ex${on?' checked':''}">
     <div class="ex-top">
@@ -1211,15 +1285,8 @@ function exCard(di,idx,e,isCore){
     </div>
     <div class="ex-note">${e.note}</div>
     ${overloadHint(log)}
-    <div class="log-row">
-      <input class="log-in" type="number" inputmode="decimal" placeholder="lb" value="${wVal}"
-        onchange="setLog(${di},'${e.n.replace(/'/g,"\\'")}','w',this.value)">
-      <span class="log-x">×</span>
-      <input class="log-in" type="number" inputmode="numeric" placeholder="reps" value="${rVal}"
-        onchange="setLog(${di},'${e.n.replace(/'/g,"\\'")}','r',this.value)">
-      <button class="log-save" onclick="saveLift(${di},'${e.n.replace(/'/g,"\\'")}')">Save</button>
-      ${lastTxt}
-    </div>
+    <div class="sets-wrap">${setsHTML}</div>
+    ${lastTxt}
   </div>`;
 }
 
@@ -1305,10 +1372,37 @@ window.saveLift=function(d,name){
   const l=logs[k]||{w:'',r:'',last:''};
   if(l.w&&l.r){
     l.last=l.w+' lb × '+l.r;
-    l.lw=parseFloat(l.w);   // numeric last weight
-    l.lr=parseInt(l.r);     // numeric last reps
+    l.lw=parseFloat(l.w);
+    l.lr=parseInt(l.r);
     logs[k]=l;
     saveLogs();
+    render();
+  }
+};
+// log one set -> reveals the next; auto-checks the exercise when all sets done
+window.logSet=function(di,idx,name){
+  const k=logKey(di,name);
+  const we=document.getElementById('sw_'+di+'_'+idx);
+  const re_=document.getElementById('sr_'+di+'_'+idx);
+  const w=we?we.value:''; const r=re_?re_.value:'';
+  if(!w||!r) return;
+  if(!Array.isArray(setProg[k])) setProg[k]=[];
+  setProg[k].push({w:String(w), r:String(r)});
+  saveSetProg();
+  const l=logs[k]||{last:''};
+  l.last=w+' lb × '+r; l.lw=parseFloat(w); l.lr=parseInt(r);
+  logs[k]=l; saveLogs();
+  const c=parseSets(exSchemeAt(di,idx)).count;
+  if(setProg[k].length>=c){ state[di][idx]=true; saveState(); }
+  render();
+};
+// undo last logged set
+window.undoSet=function(di,idx,name){
+  const k=logKey(di,name);
+  if(Array.isArray(setProg[k])&&setProg[k].length){
+    setProg[k].pop();
+    saveSetProg();
+    if(state[di][idx]){ state[di][idx]=false; saveState(); }
     render();
   }
 };
@@ -2442,9 +2536,9 @@ async function shareStory(){
 
   // header
   ctx.fillStyle=muted; ctx.font='600 34px Archivo, sans-serif';
-  ctx.fillText('WEEKLY RECAP', W/2, 150);
+  ctx.fillText('WEEKLY RECAP', W/2, 180);
   ctx.fillStyle=txt; ctx.font='700 46px Archivo, sans-serif';
-  ctx.fillText('Week of '+d.weekLabel, W/2, 205);
+  ctx.fillText('Week of '+d.weekLabel, W/2, 240);
 
   // hero — circular ring card with the change inside
   let y=430;
@@ -2467,8 +2561,7 @@ async function shareStory(){
   }
 
   if(hasHero){
-    // Push the ring lower so it never collides with the header/title
-    const cx=W/2, ccy=540, R=240;
+    const cx=W/2, ccy=470, R=240;
     // faint track ring
     ctx.beginPath(); ctx.arc(cx,ccy,R,0,Math.PI*2);
     ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.lineWidth=14; ctx.stroke();
@@ -2479,28 +2572,12 @@ async function shareStory(){
     // label inside top
     ctx.fillStyle=muted; ctx.font='600 32px Archivo, sans-serif';
     ctx.fillText(heroLabel, cx, ccy-90);
-    // big number + unit centered as one inline group
-    const heroNumFont='900 150px "Bebas Neue", Archivo, sans-serif';
-    const heroUnitFont='700 44px Archivo, sans-serif';
-    const heroUnitGap=18;
-    const heroBaseY=ccy+30;
-
-    ctx.textBaseline='alphabetic';
-    ctx.font=heroNumFont;
-    const heroNumW=ctx.measureText(heroNum).width;
-    ctx.font=heroUnitFont;
-    const heroUnitW=ctx.measureText('lb').width;
-    const heroStartX=cx-(heroNumW+heroUnitGap+heroUnitW)/2;
-
-    ctx.textAlign='left';
-    ctx.fillStyle=heroCol;
-    ctx.font=heroNumFont;
-    ctx.fillText(heroNum, heroStartX, heroBaseY);
-
-    ctx.fillStyle=muted;
-    ctx.font=heroUnitFont;
-    ctx.fillText('lb', heroStartX+heroNumW+heroUnitGap, heroBaseY-18);
-    ctx.textAlign='center';
+    // big number center
+    ctx.fillStyle=heroCol; ctx.font='900 150px "Bebas Neue", Archivo, sans-serif';
+    ctx.fillText(heroNum, cx, ccy+30);
+    // lb
+    ctx.fillStyle=muted; ctx.font='600 40px Archivo, sans-serif';
+    ctx.fillText('lb', cx, ccy+85);
     // caption below the circle
     ctx.fillStyle=heroCol; ctx.font='800 50px Archivo, sans-serif';
     ctx.fillText(heroCaption, cx, ccy+R+70);
